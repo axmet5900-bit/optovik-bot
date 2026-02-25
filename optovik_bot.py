@@ -3,6 +3,8 @@ from telebot import types
 import random
 import time
 import os
+from flask import Flask
+import threading
 
 # ====================================================
 # BOT TOKEN - @BotFather dan olingan
@@ -18,28 +20,68 @@ GURUH_NOMI = "OPTOVIK SHOP"
 GURUH_LINKI = "https://t.me/Optovikshop_namangan"
 TELEFON_RAQAM = "+998917585900"
 
-# Ayollar uchun mehrli murojaatlar
+# ====================================================
+# AYOLLAR UCHUN MEHRLI MUROJAATLAR (40 xil)
+# ====================================================
 mehrli_murojaatlar = [
     "azizaxon", "jahon", "gulim", "jonim", "opajon", "singiljon", 
-    "malikam", "shirinjon", "mehribonim", "qizim", "xonimjon", "gulbahorim"
+    "malikam", "shirinjon", "mehribonim", "qizim", "xonimjon", "gulbahorim",
+    "dilbarim", "sadoqatim", "farzandim", "onajon", "opa", "singil",
+    "go'zalim", "malikam", "shahzodam", "parizod", "bebahom", "aslim",
+    "muhabbatim", "orzuim", "maftunim", "dildorim", "sog'inchim", "omonim",
+    "javlonim", "niholim", "lolaxon", "nargiz", "durdona", "gavhar",
+    "marvarid", "zumrad", "qimmatim", "bahorim"
 ]
 
-# Salomlashish so'zlari
-salomlashish = ["salom", "assalom", "assalomu alaykum", "alaykum assalom", "salom alejkum",
-                "hayrli kun", "hayrli tong", "hayrli kech", "xayrli kun"]
+# ====================================================
+# SALOMLASHISH SO'ZLARI (20 xil)
+# ====================================================
+salomlashish = [
+    "salom", "assalom", "assalomu alaykum", "alaykum assalom", "salom alejkum",
+    "hayrli kun", "hayrli tong", "hayrli kech", "xayrli kun", "xayrli tong",
+    "xayrli kech", "salom qalay", "salom ishlar", "salom berdim", "salom opa",
+    "salom singil", "salom jon", "salom azizaxon", "salom gulim", "salom dunyo"
+]
 
-# Xayrlashish so'zlari
-xayrlashish = ["xayr", "hayr", "xayr xayr", "rahmat", "katta rahmat", "ko'rishguncha", 
-               "xayr salomat", "hozircha"]
+# ====================================================
+# XAYRLASHISH SO'ZLARI (15 xil)
+# ====================================================
+xayrlashish = [
+    "xayr", "hayr", "xayr xayr", "rahmat", "katta rahmat", "ko'rishguncha", 
+    "xayr salomat", "hozircha", "sog' bo'ling", "omad", "xayr endi", 
+    "ketdim", "boring", "xayr xudo hafsiz", "xayrli tun"
+]
 
-# Hol-ahvol so'rash
-hol_ahvol = ["qalay", "qalaysiz", "qanday", "qandaysiz", "yaxshimisiz", "ishlar qalay",
-             "ahvollaringiz", "yuribsizmi"]
+# ====================================================
+# HOL-AHVOL SO'RASH (15 xil)
+# ====================================================
+hol_ahvol = [
+    "qalay", "qalaysiz", "qanday", "qandaysiz", "yaxshimisiz", "ishlar qalay",
+    "ahvollaringiz", "yuribsizmi", "nima gap", "nima yangilik", "ishlar joyidami",
+    "tinchmisiz", "sog'lik", "yaxshi yuribsizmi", "hayot qalay"
+]
 
-# Tashakkur so'zlari
-tashakkur = ["rahmat", "tashakkur", "minnatdor", "katta rahmat", "rahmat sizga", "arzimaydi"]
+# ====================================================
+# TASHAKKUR SO'ZLARI (12 xil)
+# ====================================================
+tashakkur = [
+    "rahmat", "tashakkur", "minnatdor", "katta rahmat", "rahmat sizga", 
+    "arzimaydi", "rahma", "tashakkur sizga", "minnatdorman", "rahmat opa",
+    "rahmat singil", "borakalla"
+]
 
+# ====================================================
+# SAVOL SO'ZLARI (narx, qayer, qachon, qanaqa)
+# ====================================================
+savol_sozlar = [
+    "narx", "qancha", "puli", "so'm", "sum", "narhi", "narxi",
+    "qayerda", "qayerdan", "qachon", "qachon keladi", "bormi", 
+    "qanaqa", "qanday", "qaysi", "necha", "nechchi"
+]
+
+# ====================================================
 # /start komandasi
+# ====================================================
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     ism = message.from_user.first_name
@@ -86,69 +128,97 @@ Quyidagi tugmalardan birini tanlang 👇
     btn4 = types.KeyboardButton("🏠 Uy-ro'zg'or")
     btn5 = types.KeyboardButton("💍 Aksesuarlar")
     btn6 = types.KeyboardButton("📱 Elektronika")
-    btn7 = types.KeyboardButton("📞 Zulhumor bilan bog'lanish")
+    btn7 = types.KeyboardButton("📞 Admin bilan bog'lanish")
     btn8 = types.KeyboardButton("ℹ️ Guruh haqida")
     btn9 = types.KeyboardButton("🌸 Ayollar maslahati")
-    markup.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9)
+    btn10 = types.KeyboardButton("❓ Savol-javob")
+    markup.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9, btn10)
     
     bot.send_message(message.chat.id, salom_matni, parse_mode='Markdown', disable_web_page_preview=True, reply_markup=markup)
 
-# Kosmetika haqida
+# ====================================================
+# KOSMETIKA
+# ====================================================
 @bot.message_handler(func=lambda message: message.text == "💄 Kosmetika")
 def kosmetika(message):
     ism = message.from_user.first_name
     mehrli = random.choice(mehrli_murojaatlar)
     
     matn = f"""
-💄 *{ism} XONIM, KOSMETIKA MAHSULOTLARI:*
+💄 *{ism} XONIM, KOSMETIKA MAHSULOTLARIMIZ:*
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
-🧴 *Yuz kremi* - terini namlaydi, oziqlantiradi va mayinlik bag'ishlaydi
-👁️ *Ko'z atrofi kremi* - shish va qorayishlarni ketkazadi, elastiklikni oshiradi
-💆 *Body loson* - tanani namlaydi, mayin va yumshoq qiladi
-🧼 *Penka* - qarishga qarshi, yuz dog'larini ochartiradi
-❄️ *Ice Raw Puli* - muz terapiyasi, terini tetiklashtiradi
-🌟 *Nabor (to'plam)* - barcha mahsulotlar bir joyda
+🧴 *Yuz kremi* - terini namlaydi, oziqlantiradi
+   *Narxi:* 45.000 - 85.000 so'm
+
+👁️ *Ko'z atrofi kremi* - shish va qorayishlarni ketkazadi
+   *Narxi:* 55.000 so'm
+
+💆 *Body loson* - tanani namlaydi, mayin qiladi
+   *Narxi:* 65.000 so'm
+
+🧼 *Penka* - yuzni tozalaydi, dog'larni ochartiradi
+   *Narxi:* 75.000 so'm
+
+❄️ *Ice Raw Puli* - muz terapiyasi
+   *Narxi:* 95.000 so'm
+
+🌟 *Nabor (to'plam)* - 5 mahsulot
+   *Narxi:* 350.000 so'm
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
 ✨ *Barcha mahsulotlar ORIGINAL va SIFATLI!*
-✨ *Namangan shahrida yetkazib berish tez va bepul!*
+✨ *Namangan shahrida yetkazib berish bepul!*
 
-{mehrli}, bu mahsulotlar teringizni yanada go'zal qiladi! 
-Narxlar va batafsil ma'lumot uchun Zulhumor opaga yozing!
+{mehrli}, qaysi mahsulot sizni qiziqtirdi? 
+Batafsil ma'lumot uchun admin bilan bog'lanishingiz mumkin.
     """
     
     bot.send_message(message.chat.id, matn, parse_mode='Markdown')
-    admin_ga_yonalitirish(message)
+    admin_ga_ulash(message)
 
-# Kiyim-kechak
+# ====================================================
+# KIYIM-KECHAK
+# ====================================================
 @bot.message_handler(func=lambda message: message.text == "👗 Kiyim-kechak")
 def kiyim(message):
     ism = message.from_user.first_name
     mehrli = random.choice(mehrli_murojaatlar)
     
     matn = f"""
-👗 *{ism} XONIM, KIYIM-KECHAK MAHSULOTLARI:*
+👗 *{ism} XONIM, KIYIM-KECHAKLARIMIZ:*
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
-👚 *Ko'ylaklar* - turli uslub va ranglarda (S, M, L, XL)
+👚 *Ko'ylaklar* - turli uslub va ranglarda
+   *Narxi:* 120.000 - 250.000 so'm
+   *O'lchamlar:* S, M, L, XL
+
 👕 *Bluzkalar* - ofis va kundalik hayot uchun
+   *Narxi:* 80.000 - 150.000 so'm
+
 👖 *Shimlar* - klassik va sport uslubida
+   *Narxi:* 100.000 - 180.000 so'm
+
 🧥 *Kurtkalar* - qishki va yozgi modellar
+   *Narxi:* 250.000 - 450.000 so'm
+
 👘 *Xalatlar* - uy uchun qulay va chiroyli
+   *Narxi:* 150.000 - 220.000 so'm
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
 ✨ *Barcha o'lchamlar mavjud!*
 ✨ *Sifatli materiallardan tayyorlangan*
 
 {mehrli}, o'zingizga yoqqan uslubni tanlang! 
-Yangi kiyim har doim kayfiyatni ko'taradi! 👗
+Rasmlar va batafsil ma'lumot uchun admin bilan bog'lanishingiz mumkin.
     """
     
     bot.send_message(message.chat.id, matn, parse_mode='Markdown')
-    admin_ga_yonalitirish(message)
+    admin_ga_ulash(message)
 
-# Bolalar uchun
+# ====================================================
+# BOLALAR UCHUN
+# ====================================================
 @bot.message_handler(func=lambda message: message.text == "🧸 Bolalar uchun")
 def bolalar(message):
     ism = message.from_user.first_name
@@ -159,23 +229,34 @@ def bolalar(message):
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 👶 *Kombinezonlar* - 0-6 oylik bolajonlar uchun
+   *Narxi:* 80.000 - 120.000 so'm
+
 👕 *Futbolkalar* - 2-7 yosh, multfilm qahramonlari bilan
+   *Narxi:* 45.000 - 65.000 so'm
+
 👖 *Shimlar* - 1-5 yosh, qulay va elastik
+   *Narxi:* 55.000 - 75.000 so'm
+
 👗 *Ko'ylaklar* - qiz bolalar uchun chiroyli modellar
+   *Narxi:* 70.000 - 110.000 so'm
+
 🛏️ *Bolalar ko'rpalari* - yumshoq va issiq
+   *Narxi:* 150.000 - 250.000 so'm
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
 👶 *Farzandingizga eng yaxshisini tanlang!*
 ✨ *Bolalar terisiga mos, yumshoq materiallar*
 
 {mehrli}, farzandlaringiz siz bilan faxrlanadi! 
-Narxlar va mavjud o'lchamlar haqida Zulhumor opadan so'rang!
+Narxlar va mavjud o'lchamlar haqida admin bilan bog'lanishingiz mumkin.
     """
     
     bot.send_message(message.chat.id, matn, parse_mode='Markdown')
-    admin_ga_yonalitirish(message)
+    admin_ga_ulash(message)
 
-# Uy-ro'zg'or
+# ====================================================
+# UY-RO'ZG'OR
+# ====================================================
 @bot.message_handler(func=lambda message: message.text == "🏠 Uy-ro'zg'or")
 def uy_rozgor(message):
     ism = message.from_user.first_name
@@ -186,50 +267,72 @@ def uy_rozgor(message):
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 🛏️ *Ko'rpalar* - turli o'lcham va ranglarda
+   *Narxi:* 200.000 - 400.000 so'm
+
 🛋️ *Yostiqlar* - ortopedik va oddiy
+   *Narxi:* 50.000 - 120.000 so'm
+
 🧺 *Choyshablar* - paxta, ipak va atlas
+   *Narxi:* 150.000 - 350.000 so'm
+
 🏺 *Idish-tovoqlar* - to'plam va alohida
+   *Narxi:* 80.000 - 300.000 so'm
+
 🧹 *Tozalash vositalari* - sifatli va samarali
+   *Narxi:* 30.000 - 90.000 so'm
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
 🏡 *Uyingizni obod qiladigan mahsulotlar!*
 ✨ *Sifat va qulay narxlar*
 
 {mehrli}, uyingizni yanada chiroyli qiling! 
-Qaysi mahsulot qiziqtiradi? Zulhumor opaga yozing!
+Qaysi mahsulot qiziqtiradi? Admin bilan bog'lanishingiz mumkin.
     """
     
     bot.send_message(message.chat.id, matn, parse_mode='Markdown')
-    admin_ga_yonalitirish(message)
+    admin_ga_ulash(message)
 
-# Aksesuarlar
+# ====================================================
+# AKSESUARLAR
+# ====================================================
 @bot.message_handler(func=lambda message: message.text == "💍 Aksesuarlar")
 def aksesuar(message):
     ism = message.from_user.first_name
     mehrli = random.choice(mehrli_murojaatlar)
     
     matn = f"""
-💍 *{ism} XONIM, AKSESUARLAR:*
+💍 *{ism} XONIM, AKSESUARLARIMIZ:*
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 🕶️ *Ko'zoynaklar* - quyoshdan saqlaydigan modellar
+   *Narxi:* 80.000 - 200.000 so'm
+
 🧣 *Sharflar* - turli rang va o'lchamlarda
+   *Narxi:* 40.000 - 90.000 so'm
+
 🧤 *Qo'lqoplar* - qishki va yozgi
+   *Narxi:* 30.000 - 70.000 so'm
+
 👛 *Hamyonlar* - ayollar va erkaklar uchun
+   *Narxi:* 60.000 - 150.000 so'm
+
 💎 *Zargarlik buyumlari* - original va chiroyli
+   *Narxi:* 100.000 - 500.000 so'm
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
 ✨ *Kiyimingizga chiroyli qo'shimchalar!*
 ✨ *Har didga mos tanlov*
 
 {mehrli}, aksesuarlar sizni yanada go'zal qiladi! 
-Narxlar va rasmlar uchun Zulhumor opaga yozing!
+Rasmlar uchun admin bilan bog'lanishingiz mumkin.
     """
     
     bot.send_message(message.chat.id, matn, parse_mode='Markdown')
-    admin_ga_yonalitirish(message)
+    admin_ga_ulash(message)
 
-# Elektronika
+# ====================================================
+# ELEKTRONIKA
+# ====================================================
 @bot.message_handler(func=lambda message: message.text == "📱 Elektronika")
 def elektronika(message):
     ism = message.from_user.first_name
@@ -240,23 +343,34 @@ def elektronika(message):
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 🎧 *Quloqchinlar* - bluetooth va simli
+   *Narxi:* 70.000 - 250.000 so'm
+
 🔋 *Powerbank* - 10000, 20000 va 30000 mAh
+   *Narxi:* 150.000 - 350.000 so'm
+
 📱 *Telefon aksesuarlari* - g'ilof, himoya oynasi
+   *Narxi:* 30.000 - 120.000 so'm
+
 💡 *Fonarlar* - kuchli yorug'likli
+   *Narxi:* 50.000 - 150.000 so'm
+
 🔌 *Zaryadlovchi kabellar* - turli xil
+   *Narxi:* 25.000 - 60.000 so'm
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
 ✨ *Sifatli va ishonchli elektronika*
 ✨ *Arzon narxlar, kafolatli mahsulotlar*
 
 {mehrli}, zamonaviy texnologiyalardan foydalaning!
-Batafsil ma'lumot uchun Zulhumor opaga yozing!
+Batafsil ma'lumot uchun admin bilan bog'lanishingiz mumkin.
     """
     
     bot.send_message(message.chat.id, matn, parse_mode='Markdown')
-    admin_ga_yonalitirish(message)
+    admin_ga_ulash(message)
 
-# Ayollar maslahati
+# ====================================================
+# AYOLLAR MASLAHATI
+# ====================================================
 @bot.message_handler(func=lambda message: message.text == "🌸 Ayollar maslahati")
 def ayollar_maslahati(message):
     ism = message.from_user.first_name
@@ -270,7 +384,14 @@ def ayollar_maslahati(message):
         "Har bir ona farzandlari bilan faxrlanadi! 👩‍👧",
         "Ayol kishi uyning ko'rki, oilaning ziynati! 🏡",
         "Tabassum sizga juda yarashadi! 😊",
-        "Kun yangi boshlangan, bugun ajoyib kun bo'ladi! ☀️"
+        "Kun yangi boshlangan, bugun ajoyib kun bo'ladi! ☀️",
+        "Siz kuchlisiz, siz go'zalsiz, siz bebahosiz! 💎",
+        "O'z sog'lig'ingizga e'tibor bering - bu eng muhim boylik!",
+        "Farzandlaringiz sizning eng katta boyligingiz! 👶",
+        "Bir piyona choy iching va dam oling! ☕",
+        "Do'stlaringiz bilan ko'proq vaqt o'tkazing! 👯‍♀️",
+        "Orzularingiz sari intiling! ✨",
+        "Bugun o'zingiz uchun yaxshilik qiling! 🎁"
     ]
     
     maslahat = random.choice(maslahatlar)
@@ -278,206 +399,49 @@ def ayollar_maslahati(message):
     matn = f"""
 🌸 *{ism} XONIM, SIZGA MAXSUS MASLAHAT:*
 
-*{maslahat}*
+*✨ {maslahat} ✨*
 
-{mehrli}, o'zingizni asrang va seving! Siz dunyodagi eng go'zal ayollardan birisiz! 💝
+{mehrli}, o'zingizni asrang va seving! 
+Siz dunyodagi eng go'zal ayollardan birisiz! 💝
 
 *Yana maslahat kerak bo'lsa, shu tugmani yana bosing!*
     """
     
     bot.send_message(message.chat.id, matn, parse_mode='Markdown')
 
-# Guruh haqida
-@bot.message_handler(func=lambda message: message.text == "ℹ️ Guruh haqida")
-def guruh_haqida(message):
+# ====================================================
+# SAVOL-JAVOB
+# ====================================================
+@bot.message_handler(func=lambda message: message.text == "❓ Savol-javob")
+def savol_javob(message):
     ism = message.from_user.first_name
     mehrli = random.choice(mehrli_murojaatlar)
     
     matn = f"""
-ℹ️ *{GURUH_NOMI} NAMANGAN HAQIDA*
+❓ *{ism} XONIM, SIZGA QANDAY YORDAM BERA OLAMAN?*
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
+📌 *TEZ-TEZ SO'RALADIGAN SAVOLLAR:*
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔹 *Mahsulotlar qayerda ishlab chiqarilgan?*
+   - Barcha mahsulotlar Xitoy, Turkiya va Koreyadan keltiriladi
+
+🔹 *Yetkazib berish bormi?*
+   - Ha, Namangan shahri bo'ylab yetkazib berish BEPUL
+
+🔹 *To'lov qanday amalga oshiriladi?*
+   - Naqd, plastik karta yoki pul o'tkazmasi orqali
+
+🔹 *Mahsulotni qaytarish mumkinmi?*
+   - Ha, agar nuqsoni bo'lsa 7 kun ichida almashtirib beramiz
+
+🔹 *Chegirmalar bormi?*
+   - Doimiy mijozlarimizga 5-15% chegirma mavjud
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+📞 *Boshqa savollar bo'lsa, admin bilan bog'lanishingiz mumkin:*
+━━━━━━━━━━━━━━━━━━━━━━━━
+
 👩‍💼 *Admin:* {ADMIN_ISMI}
-📱 *Telefon:* `{TELEFON_RAQAM}`
-💬 *Telegram:* {ADMIN_USERNAME}
-📍 *Shahar:* Namangan
-━━━━━━━━━━━━━━━━━━━━━━━━
-
-🌟 *MAHSULOT TURLARI:*
-
-💄 *Kosmetika* - yuz kremlari, penka, body loson
-👗 *Kiyim-kechak* - ayollar uchun turli modellar
-🧸 *Bolalar mahsulotlari* - kiyim va buyumlar
-🏠 *Uy-ro'zg'or* - ko'rpa, choyshab, idishlar
-💍 *Aksesuarlar* - ko'zoynak, sharf, hamyon
-📱 *Elektronika* - quloqchin, powerbank
-
-━━━━━━━━━━━━━━━━━━━━━━━━
-✅ *100% SIFAT KAFOLATI*
-✅ *ENG QULAY NARXLAR*
-✅ *NAMANGAN BO'YLAB YETKAZIB BERISH*
-✅ *DO'STONA MUHIT VA SAMIMIY MULOQOT*
-━━━━━━━━━━━━━━━━━━━━━━━━
-
-🌐 *Guruhga a'zo bo'ling:* [OPTOVIK SHOP NAMANGAN]({GURUH_LINKI})
-
-{mehrli}, savollar bo'lsa, bemalol murojaat qiling! 🤗
-    """
-    
-    bot.send_message(message.chat.id, matn, parse_mode='Markdown', disable_web_page_preview=True)
-    admin_ga_yonalitirish(message)
-
-# Zulhumor bilan bog'lanish
-@bot.message_handler(func=lambda message: message.text == "📞 Zulhumor bilan bog'lanish")
-def zulhumor_bilan_boglanish(message):
-    ism = message.from_user.first_name
-    mehrli = random.choice(mehrli_murojaatlar)
-    
-    markup = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton("📞 Zulhumorga yozish", url="https://t.me/Zulxumor5900")
-    btn2 = types.InlineKeyboardButton("📱 Telefon raqam", callback_data="show_phone")
-    markup.add(btn1, btn2)
-    
-    matn = f"""
-📞 *{ism} XONIM, MEN BILAN BOG'LANISH UCHUN:*
-
-━━━━━━━━━━━━━━━━━━━━━━━━
-👩‍💼 *Admin:* {ADMIN_ISMI} opa
-📱 *Telefon:* `{TELEFON_RAQAM}`
-💬 *Telegram:* {ADMIN_USERNAME}
-━━━━━━━━━━━━━━━━━━━━━━━━
-
-*Quyidagi tugmalardan birini tanlang, {mehrli}!* 👇
-    """
-    
-    bot.send_message(message.chat.id, matn, parse_mode='Markdown', reply_markup=markup)
-
-# Admin ga yo'naltirish funksiyasi
-def admin_ga_yonalitirish(message):
-    mehrli = random.choice(mehrli_murojaatlar)
-    
-    markup = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton("📞 Zulhumorga yozish", url="https://t.me/Zulxumor5900")
-    btn2 = types.InlineKeyboardButton("📱 Telefon raqam", callback_data="show_phone")
-    markup.add(btn1, btn2)
-    
-    matn = f"""
-💬 *BATAFSIL MA'LUMOT UCHUN*
-
-{mehrli}, narxlar, rasmlar va barcha ma'lumotlarni 
-Zulhumor opadan olishingiz mumkin!
-
-👇 *Quyidagi tugmani bosib, yozing!*
-    """
-    
-    bot.send_message(message.chat.id, matn, parse_mode='Markdown', reply_markup=markup)
-
-# Inline tugmalar uchun
-@bot.callback_query_handler(func=lambda call: True)
-def inline_buttons(call):
-    ism = call.from_user.first_name
-    mehrli = random.choice(mehrli_murojaatlar)
-    
-    if call.data == "show_phone":
-        matn = f"""
-📱 *ZULHUMOR OPANING TELEFON RAQAMI:*
-
-`{TELEFON_RAQAM}`
-
-💬 *Telegram:* {ADMIN_USERNAME}
-
-{mehrli}, qo'ng'iroq qilishingiz yoki Telegramdan yozishingiz mumkin!
-        """
-        bot.send_message(call.message.chat.id, matn, parse_mode='Markdown')
-
-# Narx so'raganda to'g'ridan-to'g'ri admin ga
-@bot.message_handler(func=lambda message: any(soz in message.text.lower() for soz in ["narx", "qancha", "puli", "so'm", "sum", "narhi"]))
-def narx_sorash(message):
-    ism = message.from_user.first_name
-    mehrli = random.choice(mehrli_murojaatlar)
-    
-    bot.reply_to(message, f"{mehrli}, narxlar haqida so'ragan ekansiz. Bu yerda narx yozish mumkin emas, Zulhumor opaga yozing!")
-    
-    markup = types.InlineKeyboardMarkup()
-    btn = types.InlineKeyboardButton("📞 Zulhumorga yozish", url="https://t.me/Zulxumor5900")
-    markup.add(btn)
-    bot.send_message(message.chat.id, "👇 Shu tugmani bosing!", reply_markup=markup)
-
-# Salomlashish
-@bot.message_handler(func=lambda message: any(soz in message.text.lower() for soz in salomlashish))
-def salom_javob(message):
-    ism = message.from_user.first_name
-    mehrli = random.choice(mehrli_murojaatlar)
-    
-    javoblar = [
-        f"Va alaykum assalom, {mehrli} {ism}! Qanday yaxshi odam bilan uchrashdim! 😊 Qaysi mahsulot qiziqtiradi?",
-        f"Assalomu alaykum, azizaxon {ism}! OPTOVIK SHOP ga xush kelibsiz! Qanday yordam kerak?",
-        f"Hayrli kun {ism} xonim! Sizni ko'rganimdan xursandman! Namanganning eng go'zal ayollaridan biriga xizmat ko'rsatish sharaf! 🌸"
-    ]
-    bot.reply_to(message, random.choice(javoblar))
-
-# Hol-ahvol so'rash
-@bot.message_handler(func=lambda message: any(soz in message.text.lower() for soz in hol_ahvol))
-def qalay_javob(message):
-    ism = message.from_user.first_name
-    mehrli = random.choice(mehrli_murojaatlar)
-    
-    javoblar = [
-        f"Rahmat so'raganingiz uchun, {mehrli}! Yaxshi, ishlar joyida. Sizning ahvollaringiz qalay?",
-        f"Ajoyib, rahmat {ism}jon! Bugun kayfiyatingiz ko'tarinki ko'rinib turibdi. Biror yangilik bormi?",
-        f"Yaxshi, rahmat! Siz bilan gaplashganimdan keyin kayfiyatim yanada yaxshilandi. Siz qalay, {mehrli}?"
-    ]
-    bot.reply_to(message, random.choice(javoblar))
-
-# Tashakkur
-@bot.message_handler(func=lambda message: any(soz in message.text.lower() for soz in tashakkur))
-def rahmat_javob(message):
-    ism = message.from_user.first_name
-    mehrli = random.choice(mehrli_murojaatlar)
-    
-    javoblar = [
-        f"Arzimaydi, {mehrli}! Sizga yordam berishdan xursandman! Yana savol bo'lsa, yozing.",
-        f"Rahmat sizga ham, {ism}jon! OPTOVIK SHOP ni tanlaganingiz uchun tashakkur!",
-        f"Marhamat, azizaxon! Doim sizni kutib qolamiz! 🌸"
-    ]
-    bot.reply_to(message, random.choice(javoblar))
-
-# Xayrlashish
-@bot.message_handler(func=lambda message: any(soz in message.text.lower() for soz in xayrlashish))
-def xayr_javob(message):
-    ism = message.from_user.first_name
-    mehrli = random.choice(mehrli_murojaatlar)
-    
-    javoblar = [
-        f"Xayr {mehrli}! Yana kelib turing, yangi mahsulotlar kelyapti!",
-        f"Xayr xayr, {ism}jon! Sog'liq va omad tilayman!",
-        f"Salomat bo'ling, azizaxon! OPTOVIK SHOP da yana ko'rishguncha! 🌸"
-    ]
-    bot.reply_to(message, random.choice(javoblar))
-
-# Boshqa xabarlar
-@bot.message_handler(func=lambda message: True)
-def boshqa_javob(message):
-    ism = message.from_user.first_name
-    mehrli = random.choice(mehrli_murojaatlar)
-    
-    javoblar = [
-        f"{mehrli}, tushunmadim biroz. Yana bir bor ayting-chi?",
-        f"Ha, {ism}jon! Savolingiz bo'lsa, bemalol yozing. Qaysi mahsulot qiziqtiradi?",
-        f"{mehrli}, sizga qanday yordam bera olaman? Kosmetika, kiyim yoki boshqa mahsulot?",
-        f"Tushunishga harakat qilyapman, {ism}jon. Iltimos, yana bir bor yozing!"
-    ]
-    bot.reply_to(message, random.choice(javoblar))
-
-print("=" * 50)
-print("🌸 OPTOVIK SHOP BOTI ISHGA TUSHDI! 🌸")
-print("=" * 50)
-print(f"👩‍💼 Admin: {ADMIN_ISMI} {ADMIN_USERNAME}")
-print(f"📞 Telefon: {TELEFON_RAQAM}")
-print(f"🏪 Guruh: {GURUH_NOMI} NAMANGAN")
-print("=" * 50)
-print("✅ Bot muvaffaqiyatli ishga tushdi!")
-print("📱 Telegramda botingizni ochib /start yozing")
-print("=" * 50)
-
-bot.infinity_polling()
+📱 *Telefon:* {TELEFON
